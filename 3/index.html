@@ -1,0 +1,163 @@
+<html>
+    <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width" />
+    <link rel="stylesheet" href="JS/jquery.mobile.min.css">
+    <script src="JS/jquery.min.js"></script>
+    <script src="JS/jquery.mobile.min.js"></script>
+    <script src="JS/date.js"></script>
+    <title></title>
+    </head>
+<body onload="load()">
+
+<div data-role="page" data-control-title="Page" id="page">
+    <div data-theme="a" data-role="header" data-position="fixed">
+        <h3>汇跑计时</h3>
+    </div>
+    <div data-role="content">
+        输入秘钥<input type="text" id="number" > 
+       <input type="submit" data-role='button' id="check" value="提交">
+    </div>
+</div>    
+
+
+    
+<div data-role="page" data-control-title="Page" id="page1">
+    <div data-theme="a" data-role="header" data-position="fixed">
+        <h3>汇跑计时</h3>
+    </div>
+    <div data-role="content">
+	<input type="hidden" id="cp" value="">
+        <div data-role="fieldcontain" data-controltype="selectmenu">
+            <label for="selectmenu2">
+                运动员信息:
+            </label>
+            <span id="num"><a href='#select' data-role='button' id="Pnumber">选择运动员</a></span>			
+        </div>
+	<input type="submit" data-role='button' id="update" value="提交">
+    </div>
+
+</div>
+
+
+
+<div data-role="page" data-control-title="select" id="select">
+    <div data-theme="a" data-role="header" data-position="fixed">
+        <a href=""  target='_self' class="ui-btn ui-corner-all ui-icon-delete ui-btn-icon-notext ui-btn-left" id="url">Close::after</a>
+        <h3>
+            选择运动员
+        </h3>
+    </div>
+    <div data-role="content">
+        <ul data-role="listview" data-filter="true"  data-filter-placeholder="运动员号码" id="my"  >	
+	</ul>
+    </div> 
+</div>
+
+</body>
+</html>
+
+<script>
+url = 'http://ihwh.sinaapp.com/';    
+str = '';
+cp = getQueryStringValue('cp');
+Pnumber = getQueryStringValue('Pnumber') ||'选择运动员';
+$('#select #url').attr('href','index.html?cp='+cp+'#page1');
+$('#Pnumber').text(Pnumber);     
+    
+$(document).ready(function(){
+	
+ 	$('#check').click(function(){
+		var number = $('#number').val();
+                if(number === undefined || number ==='' ){
+                    return false;
+                }else{    
+                    $.ajax({
+                            type: "post",
+                            dataType: "json",
+                            url: url + "ajax.php?type=check",
+                            data:{Pnumber:number},
+                            error:function(){
+                                alert('网络问题请重新尝试');
+                            },
+                            success: function(msg){
+                                    if( msg === 'error'){
+                                        alert('秘钥错误，请重新输入');
+                                    }else{
+                                        alert('即将进入cp'+msg);
+                                        
+                                        self.location='index.html?cp='+msg+'#page1';
+                                    }    
+                            }
+                    });
+                }    
+	});
+    
+	$('#update').click(function(){
+		if(Pnumber == undefined || Pnumber == ''){ 
+			return false;
+		}
+		
+		$.ajax({
+			type: "post",
+			dataType: "json",
+			url: "ajax.php?type=update",
+			data:{cp:cp,Pnumber:Pnumber},
+ 			error:function(){
+				alert('网络错误，重新尝试');		
+
+			}, 
+			success: function(msg){
+				if(msg){
+					alert('计时成功');
+				}else{
+					alert('计时失败');
+				}
+			}
+		});
+		
+		$.mobile.changePage("#makeSure");
+				
+	});    
+});
+
+    $( document ).bind( "pageinit",'#page1', function(){
+    	$('#select .ui-filterable input').attr('type','number');
+    })    
+    
+function load(){
+    if(cp){
+        $.ajax({
+           type: "post",
+           dataType: "json",
+           url: url + "ajax.php?type=findAll",
+           error:function(){
+               alert('网络问题请,重新尝试');
+           },
+           success: function(msg){
+               var len = msg.length;
+               for(var i=0;i<len;i++){
+                   str = str + "<li><a href='index.html?pnumber="+msg[i] +"&cp="+ cp +"#page1' target='_self'>"+msg[i]+"</a></li>";
+               }
+               $('#my').html(str);
+           }
+       });
+
+    }
+  
+}
+function getQueryStringValue(keyName){ 
+    var searchStr = location.search.substr(1); 
+    if(searchStr.length === 0 ) 
+        return null; 
+    var collection = searchStr.split('&'); 
+    for(var i=0;i<collection.length;i++){ 
+        var tmp = collection[i].split('='); 
+        if(tmp.length<2) 
+            continue; 
+        if(tmp[0].toUpperCase() === keyName.toUpperCase()) 
+            return tmp[1]; 
+    } 
+    return null; 
+}
+</script>
